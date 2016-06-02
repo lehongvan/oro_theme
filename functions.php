@@ -1,5 +1,5 @@
 <?php
- 
+
 /**
 * Thiết lập các hằng dữ liệu quan trọng
 * THEME_URL = get_stylesheet_directory() - đường dẫn tới thư mục theme
@@ -7,14 +7,14 @@
 **/
 define( 'THEME_URL', get_stylesheet_directory() );
 define( 'CORE', THEME_URL . '/core' );
- 
+
 /**
 * Load file /core/init.php
 * Đây là file cấu hình ban đầu của theme mà sẽ không nên được thay đổi sau này.
 **/
- 
+
 require_once( CORE . '/init.php' );
- 
+
 /**
 * Thiết lập $content_width để khai báo kích thước chiều rộng của nội dung
 **/
@@ -24,7 +24,7 @@ if ( ! isset( $content_width ) ) {
    */
   $content_width = 620;
 }
- 
+
 /**
 * Thiết lập các chức năng sẽ được theme hỗ trợ
 **/
@@ -100,25 +100,28 @@ if ( ! function_exists( 'oro_theme_setup' ) ) {
 function pressroom_taxonomy() {
   $labels = array(
     'name'      => 'Pressroom',
-    'singular'  => 'news',
-    'menu_name' => 'Press-room'
+    'singular'  => 'News',
+    'menu_name' => 'Category'
   );
 
   $args = array(
     'labels'            => $labels,
     'hierarchical'      => true,
     'pulic'             => true,
+    'show_ui'           => true,
     'show_tagcloud'     => true,
+    'query_var'		      => true,
+    'show_in_nav_menus' => true,
     'rewrite'           => array( 'slug' => 'press-room' ),
   );
 
-  register_taxonomy( 'pressroom', array('pressroom-post-type'), $args );
+  register_taxonomy( 'pressroom_tax', 'pressroom_post', $args );
 }
 
 add_action( 'init', 'pressroom_taxonomy', 0 );
 
 
-function pressroom_post_type() {
+function pressroom_post() {
 
   $labels = array(
     'name' => 'Press room',
@@ -149,35 +152,37 @@ function pressroom_post_type() {
     'exclude_from_search' => false,
     'publicly_queryable' => true,
     'capability_type' => 'post',
-    'rewrite' => array( 'slug' => 'press-room/%pressroom%', 'with_front' => false )
+    'rewrite' => array( 'slug' => 'press-room/%category%', 'with_front' => false ),
+    'query_var'		=> true
   );
 
 
-  register_post_type( 'pressroom-post-type', $args );
+  register_post_type( 'pressroom_post', $args );
 
 }
 
-add_action( 'init', 'pressroom_post_type' );
+add_action( 'init', 'pressroom_post' );
 
 
 
 
-/*Filtro per modificare il permalink*/
-add_filter('post_link', 'pressroom_permalink', 1, 3);
-add_filter('post_type_link', 'pressroom_permalink', 1, 3);
+/* Filter modifies the permaling */
 
-function pressroom_permalink($permalink, $post_id, $leavename) {
-  //con %pressroom% catturo il rewrite del Custom Post Type
-    if (strpos($permalink, '%pressroom%') === FALSE) return $permalink;
+add_filter('post_link', 'category_permalink', 1, 3);
+add_filter('post_type_link', 'category_permalink', 1, 3);
+
+function category_permalink($permalink, $post_id, $leavename) {
+	//con %category% catturo il rewrite del Custom Post Type
+    if (strpos($permalink, '%category%') === FALSE) return $permalink;
         // Get post
         $post = get_post($post_id);
         if (!$post) return $permalink;
 
         // Get taxonomy terms
-        $terms = wp_get_object_terms($post->ID, 'pressroom');
+        $terms = wp_get_object_terms($post->ID, 'pressroom_tax');
         if (!is_wp_error($terms) && !empty($terms) && is_object($terms[0]))
-          $taxonomy_slug = $terms[0]->slug;
-        else $taxonomy_slug = '';
+        	$taxonomy_slug = $terms[0]->slug;
+        else $taxonomy_slug = 'no-category';
 
-    return str_replace('%pressroom%', $taxonomy_slug, $permalink);
+    return str_replace('%category%', $taxonomy_slug, $permalink);
 }
