@@ -101,7 +101,8 @@ function pressroom_taxonomy() {
   $labels = array(
     'name'      => 'Pressroom',
     'singular'  => 'News',
-    'menu_name' => 'Category'
+    'add_new_item' => 'Add New Press-room Genre',
+    'menu_name' => 'Pressroom Categories'
   );
 
   $args = array(
@@ -185,4 +186,41 @@ function category_permalink($permalink, $post_id, $leavename) {
         else $taxonomy_slug = 'no-category';
 
     return str_replace('%category%', $taxonomy_slug, $permalink);
+}
+
+
+
+function list_post_by_taxonomy( $post_type, $taxonomy, $get_terms_args = array(), $wp_query_args = array() ) {
+  $tax_terms = get_terms( $taxonomy, $get_terms_args );
+  $term_slugs = array();
+
+  if( $tax_terms ){
+    foreach ( $tax_terms as $key => $tax_term ) {
+      // $terms_slugs[] = $tax_term->slug;
+      $query_args = array(
+        'post_type' => $post_type,
+        'taxonomy' => $taxonomy->$tax_term,
+        'post-status' => 'publish',
+        'post_per_page' => -1,
+        'ignore_sticky_posts' => true
+      );
+
+      $query_args = wp_parse_args( $wp_query_args, $query_args );
+
+      $my_query = new WP_Query( $query_args );
+
+      if( $my_query->have_posts() ) { ?>
+        <h2 id="<?php echo $tax_term->slug; ?>" class="tax_term-heading"><?php echo $tax_term->name; ?></h2>
+        <ul>
+        <?php while ($my_query->have_posts()) : $my_query->the_post(); ?>
+          <li>
+            <a href="<?php the_permalink() ?>" rel="bookmark" title="Permanent Link to <?php the_title_attribute(); ?>"><?php the_title(); ?></a>
+          </li>
+        <?php endwhile; ?>
+        </ul>
+        <?php
+      }
+      wp_reset_query();
+    }
+  }
 }
