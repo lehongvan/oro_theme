@@ -1,8 +1,8 @@
 <?php
 
 get_header();
- echo "Category";
- echo "Ấdfsafsadf";
+  echo "taxonomy index";
+  echo "Ấdfsafsadf";
 get_footer();
 
 ?>
